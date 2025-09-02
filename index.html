@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Lane Runner</title>
+
+  <!-- iOS PWA bits -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lane Runner">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#111111">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" width="480" height="720" aria-label="Lane Runner game canvas"></canvas>
+
+    <div class="hud">
+      <div id="score">0</div>
+      <button id="pause" aria-label="Pause">❚❚</button>
+    </div>
+
+    <div class="controls">
+      <button id="left" class="ctrl" aria-label="Move left">◀</button>
+      <button id="brake" class="ctrl brake" aria-label="Brake">⏸</button>
+      <button id="right" class="ctrl" aria-label="Move right">▶</button>
+    </div>
+
+    <div id="install-hint" hidden>
+      <p>add to home screen: share ▸ “add to home screen”</p>
+    </div>
+  </div>
+
+  <script>
+    // show a tiny A2HS hint on iOS safari only (not when already in standalone)
+    (function(){
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      if (isIOS && !isStandalone) document.getElementById('install-hint').hidden = false;
+    })();
+  </script>
+
+  <script src="game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(console.error);
+      });
+    }
+  </script>
+</body>
+</html>
