@@ -1,58 +1,172 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Lane Runner</title>
-
-  <!-- iOS PWA bits -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Lane Runner">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-
-  <!-- PWA manifest -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#111111">
-
-  <link rel="stylesheet" href="styles.css">
+  <title>Money Front</title>
+  <style>
+    body {
+      background: #0e0e0e;
+      color: #eaeaea;
+      font-family: monospace;
+      padding: 20px;
+    }
+    button {
+      background: #222;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0f0;
+      color: #000;
+    }
+    .bar {
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 60px;
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+    }
+    #log {
+      background: #111;
+      padding: 10px;
+      height: 150px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <canvas id="game" width="480" height="720" aria-label="Lane Runner game canvas"></canvas>
 
-    <div class="hud">
-      <div id="score">0</div>
-      <button id="pause" aria-label="Pause">❚❚</button>
-    </div>
+<h1>💸 money front</h1>
 
-    <div class="controls">
-      <button id="left" class="ctrl" aria-label="Move left">◀</button>
-      <button id="brake" class="ctrl brake" aria-label="Brake">⏸</button>
-      <button id="right" class="ctrl" aria-label="Move right">▶</button>
-    </div>
+<div class="bar" id="stats"></div>
 
-    <div id="install-hint" hidden>
-      <p>add to home screen: share ▸ “add to home screen”</p>
-    </div>
-  </div>
+<div id="story"></div>
 
-  <script>
-    // show a tiny A2HS hint on iOS safari only (not when already in standalone)
-    (function(){
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      if (isIOS && !isStandalone) document.getElementById('install-hint').hidden = false;
-    })();
-  </script>
+<button onclick="work()">work legit</button>
+<button onclick="crime()">do shady shit</button>
+<button onclick="launder()">launder money</button>
+<button onclick="sleep()">end day</button>
 
-  <script src="game.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(console.error);
-      });
-    }
-  </script>
+<h3>save / load</h3>
+<button onclick="saveGame()">save</button>
+<button onclick="loadGame()">load</button>
+<textarea id="saveBox"></textarea>
+
+<div id="log"></div>
+
+<script>
+let game = {
+  cash: 500,
+  dirty: 0,
+  heat: 0,
+  rep: 10,
+  chapter: 1,
+  day: 1
+};
+
+function updateUI() {
+  stats.innerHTML =
+    `day ${game.day} | chapter ${game.chapter}<br>
+     cash: $${game.cash} | dirty: $${game.dirty} | heat: ${game.heat} | rep: ${game.rep}`;
+
+  story.innerText = getStory();
+}
+
+function logMsg(msg) {
+  log.innerHTML += msg + "<br>";
+  log.scrollTop = log.scrollHeight;
+}
+
+function getStory() {
+  if (game.chapter === 1) return "corner store front. small money, low heat.";
+  if (game.chapter === 2) return "car wash. audits started. be careful.";
+  if (game.chapter === 3) return "nightclub. cash heavy. snitches everywhere.";
+  if (game.chapter === 4) return "real estate. big bags, federal eyes.";
+  return "you beat the system. or did you?";
+}
+
+function work() {
+  let earn = 50 + game.rep;
+  game.cash += earn;
+  logMsg("you worked legit and made $" + earn);
+  updateUI();
+}
+
+function crime() {
+  let earn = 200 + Math.floor(Math.random() * 200);
+  game.dirty += earn;
+  game.heat += 5;
+  logMsg("you did some illegal shit and got $" + earn + " dirty cash");
+  checkHeat();
+  updateUI();
+}
+
+function launder() {
+  if (game.dirty <= 0) {
+    logMsg("no dirty money to launder");
+    return;
+  }
+  let amount = Math.min(200, game.dirty);
+  game.dirty -= amount;
+  game.cash += amount;
+  game.heat += 3;
+  logMsg("laundered $" + amount);
+  checkHeat();
+  updateUI();
+}
+
+function sleep() {
+  game.day++;
+  game.heat -= 2;
+  if (game.heat < 0) game.heat = 0;
+
+  if (game.day % 7 === 0) {
+    game.chapter++;
+    logMsg("new chapter unlocked 👀");
+  }
+
+  checkWin();
+  updateUI();
+}
+
+function checkHeat() {
+  if (game.heat >= 100) {
+    alert("you got raided. game over.");
+    location.reload();
+  }
+}
+
+function checkWin() {
+  if (game.chapter > 4) {
+    alert("you made it out rich. ending unlocked 🏆");
+    location.reload();
+  }
+}
+
+function saveGame() {
+  let str = btoa(JSON.stringify(game));
+  saveBox.value = str;
+  logMsg("save created. copy that shit.");
+}
+
+function loadGame() {
+  try {
+    game = JSON.parse(atob(saveBox.value));
+    logMsg("save loaded.");
+    updateUI();
+  } catch {
+    alert("bad save code dumbass");
+  }
+}
+
+updateUI();
+</script>
+
 </body>
 </html>
